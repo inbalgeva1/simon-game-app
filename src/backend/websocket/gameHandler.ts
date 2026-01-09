@@ -714,12 +714,20 @@ function advanceSimonRound(io: Server, gameCode: string): void {
  */
 function processSimonRound(io: Server, gameCode: string): void {
   const room = gameService.getRoom(gameCode);
-  if (!room || room.status !== 'active') return;
+  if (!room || room.status !== 'active') {
+    console.log(`❌ processSimonRound: Room ${gameCode} not found or inactive`);
+    return;
+  }
   
   let gameState = room.gameState as SimonGameState;
-  if (!gameState || gameState.gameType !== 'simon') return;
+  if (!gameState || gameState.gameType !== 'simon') {
+    console.log(`❌ processSimonRound: Invalid game state for ${gameCode}`);
+    return;
+  }
   
-  console.log(`🏁 Processing round ${gameState.round}...`);
+  console.log(`🏁 Processing round ${gameState.round} for room ${gameCode}...`);
+  console.log(`   Submissions: ${Object.keys(gameState.submissions).length}`);
+  console.log(`   Active players: ${Object.values(gameState.playerStates).filter(s => s.status === 'playing').length}`);
   
   // Process submissions (find fastest, eliminate wrong)
   const { gameState: newState, roundWinner, eliminations } = processRoundSubmissions(gameState);
@@ -763,12 +771,20 @@ function processSimonRound(io: Server, gameCode: string): void {
   console.log(`🏆 Round ${newState.round} complete - Winner: ${roundWinnerData?.name || 'None'}`);
   
   // Check end conditions
-  if (shouldGameEnd(newState)) {
+  const totalPlayers = Object.keys(newState.playerStates).length;
+  const activePlayers = Object.values(newState.playerStates).filter(s => s.status === 'playing').length;
+  const gameEnds = shouldGameEnd(newState);
+  
+  console.log(`🔍 Game check: ${totalPlayers} total, ${activePlayers} active → shouldEnd=${gameEnds}`);
+  
+  if (gameEnds) {
+    console.log(`🎯 ENDING GAME for ${gameCode}`);
     // Wait briefly, then end game
     setTimeout(() => {
       finishSimonGame(io, gameCode, newState, room);
     }, 3000);
   } else {
+    console.log(`➡️ ADVANCING to next round for ${gameCode}`);
     // Wait briefly, then advance to next round
     setTimeout(() => {
       advanceSimonRound(io, gameCode);
@@ -830,6 +846,8 @@ function handleSimonTimeout(io: Server, gameCode: string): void {
  * Finish Simon game and declare winner (Step 4: Competitive Scoring)
  */
 function finishSimonGame(io: Server, gameCode: string, gameState: SimonGameState, room: any): void {
+  console.log(`🏁 finishSimonGame called for ${gameCode}`);
+  
   // Step 4: Find winner by highest score
   const playerScores = Object.entries(gameState.scores)
     .map(([playerId, score]) => {
