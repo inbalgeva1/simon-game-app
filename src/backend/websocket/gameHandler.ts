@@ -14,9 +14,18 @@ import {
   processRound, 
   determineWinner 
 } from '../utils/colorRaceLogic';
-import { PLATFORM_CONSTANTS, COLOR_RACE_CONSTANTS } from '@shared/types';
+import {
+  initializeSimonGame,
+  validateInput,
+  eliminatePlayer,
+  advanceToNextRound,
+  shouldGameEnd,
+  getWinner,
+  updatePlayerProgress,
+} from '../utils/simonLogic';
+import { PLATFORM_CONSTANTS, COLOR_RACE_CONSTANTS, SIMON_CONSTANTS } from '@shared/types';
 import type { Player } from '@shared/types';
-import type { ColorRaceGameState, PlayerAnswer } from '@shared/types';
+import type { ColorRaceGameState, PlayerAnswer, SimonGameState, Color } from '@shared/types';
 
 // =============================================================================
 // TYPES
@@ -311,6 +320,91 @@ function registerGameHandlers(io: Server, socket: SocketWithSession): void {
       console.error('❌ color_race:submit_answer error:', error);
     }
   });
+  
+  /**
+   * Simon: Submit input (single color in sequence)
+   * For now (Step 1), this won't be used yet
+   */
+  socket.on('simon:submit_input', (data: { gameCode: string; playerId: string; color: Color; inputIndex: number }) => {
+    try {
+      const { gameCode, playerId, color, inputIndex } = data;
+      
+      // Verify room exists
+      const room = gameService.getRoom(gameCode);
+      if (!room || room.status !== 'active') {
+        return;
+      }
+      
+      // Get game state
+      const gameState = room.gameState as SimonGameState;
+      if (!gameState || gameState.gameType !== 'simon') {
+        return;
+      }
+      
+      // Verify player is still playing
+      const playerState = gameState.playerStates[playerId];
+      if (!playerState || playerState.status !== 'playing') {
+        return;
+      }
+      
+      // Validate input
+      const isCorrect = validateInput(gameState, playerId, color, inputIndex);
+      
+      if (!isCorrect) {
+        // Wrong input - eliminate player
+        const newState = eliminatePlayer(gameState, playerId, gameState.round);
+        gameService.updateGameState(gameCode, newState);
+        
+        // Get player info
+        const player = room.players.find(p => p.id === playerId);
+        
+        // Broadcast elimination
+        io.to(gameCode).emit('simon:player_eliminated', {
+          playerId,
+          playerName: player?.displayName || 'Unknown',
+          reason: 'wrong_color',
+        });
+        
+        // Check if game should end
+        if (shouldGameEnd(newState)) {
+          finishSimonGame(io, gameCode, newState, room);
+        }
+        
+        return;
+      }
+      
+      // Correct input - update progress
+      let newState = updatePlayerProgress(gameState, playerId);
+      gameService.updateGameState(gameCode, newState);
+      
+      // Emit correct feedback
+      io.to(gameCode).emit('simon:input_correct', {
+        playerId,
+        index: inputIndex,
+      });
+      
+      // Check if player completed the sequence
+      const updatedPlayerState = newState.playerStates[playerId];
+      if (updatedPlayerState.currentInputIndex >= newState.sequence.length) {
+        // Player completed this round!
+        console.log(`✅ Player ${playerId} completed round ${newState.round}`);
+        
+        // Check if all active players have completed
+        const allComplete = Object.values(newState.playerStates).every(state => 
+          state.status !== 'playing' || state.currentInputIndex >= newState.sequence.length
+        );
+        
+        if (allComplete) {
+          // All players completed - advance to next round
+          setTimeout(() => {
+            advanceSimonRound(io, gameCode);
+          }, 2000);
+        }
+      }
+    } catch (error) {
+      console.error('❌ simon:submit_input error:', error);
+    }
+  });
 }
 
 // =============================================================================
@@ -334,9 +428,26 @@ function startCountdown(io: Server, gameCode: string): void {
       // Update status to active
       gameService.updateRoomStatus(gameCode, 'active');
       
-      // Initialize Color Race game
+      // TODO: Determine game type (for now, default to Simon)
+      // In future: Pass game type from client or room settings
+      const gameType = 'simon'; // or 'color_race'
+      
       const room = gameService.getRoom(gameCode);
-      if (room) {
+      if (!room) return;
+      
+      if (gameType === 'simon') {
+        // Initialize Simon game
+        const gameState = initializeSimonGame(room.players);
+        gameService.updateGameState(gameCode, gameState);
+        
+        console.log(`🎮 Simon started in room: ${gameCode}`);
+        
+        // Start showing sequence after brief delay
+        setTimeout(() => {
+          showSimonSequence(io, gameCode, gameState);
+        }, 500);
+      } else {
+        // Initialize Color Race game
         const gameState = initializeColorRaceGame(room.players);
         gameService.updateGameState(gameCode, gameState);
         
@@ -411,6 +522,84 @@ function processColorRaceRound(
       }
     }, COLOR_RACE_CONSTANTS.ROUND_RESULT_DELAY_MS);
   }
+}
+
+// =============================================================================
+// SIMON GAME LOGIC
+// =============================================================================
+
+/**
+ * Show the Simon sequence to all players
+ */
+function showSimonSequence(io: Server, gameCode: string, gameState: SimonGameState): void {
+  const { sequence, round } = gameState;
+  
+  // Emit sequence start event
+  io.to(gameCode).emit('simon:show_sequence', {
+    round,
+    sequence,
+  });
+  
+  console.log(`🎨 Showing sequence for round ${round}: [${sequence.join(', ')}]`);
+  
+  // Calculate total animation time
+  // Each color shows for SHOW_COLOR_DURATION_MS + GAP
+  const totalTime = sequence.length * (SIMON_CONSTANTS.SHOW_COLOR_DURATION_MS + SIMON_CONSTANTS.SHOW_COLOR_GAP_MS);
+  
+  // After sequence completes, start input phase (for Step 2+)
+  // For Step 1, we'll just wait and then start next round automatically
+  setTimeout(() => {
+    io.to(gameCode).emit('simon:sequence_complete');
+    
+    // For Step 1: Auto-advance to next round for testing (remove this in Step 2)
+    setTimeout(() => {
+      advanceSimonRound(io, gameCode);
+    }, 3000); // Wait 3 seconds, then next round
+  }, totalTime + 500);
+}
+
+/**
+ * Advance to next Simon round
+ */
+function advanceSimonRound(io: Server, gameCode: string): void {
+  const room = gameService.getRoom(gameCode);
+  if (!room || room.status !== 'active') return;
+  
+  const gameState = room.gameState as SimonGameState;
+  if (!gameState || gameState.gameType !== 'simon') return;
+  
+  // Check if we should stop for testing (Step 1: stop at round 5)
+  if (gameState.round >= 5) {
+    io.to(gameCode).emit('simon:sequence_complete');
+    console.log(`🛑 Stopping at round 5 for Step 1 testing`);
+    return;
+  }
+  
+  // Advance to next round
+  const newState = advanceToNextRound(gameState);
+  gameService.updateGameState(gameCode, newState);
+  
+  console.log(`⏭️ Advancing to round ${newState.round}`);
+  
+  // Show new sequence
+  showSimonSequence(io, gameCode, newState);
+}
+
+/**
+ * Finish Simon game and declare winner
+ */
+function finishSimonGame(io: Server, gameCode: string, gameState: SimonGameState, room: any): void {
+  const winnerId = getWinner(gameState);
+  const winner = room.players.find((p: Player) => p.id === winnerId);
+  
+  io.to(gameCode).emit('simon:game_finished', {
+    winnerId: winnerId || '',
+    winnerName: winner?.displayName || 'No winner',
+    finalRound: gameState.round,
+  });
+  
+  gameService.updateRoomStatus(gameCode, 'finished');
+  console.log(`🏆 Simon finished in room ${gameCode} - Winner: ${winner?.displayName || 'No winner'}`);
 }
 
 // =============================================================================

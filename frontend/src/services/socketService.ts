@@ -83,3 +83,15 @@ export function off(event: string, callback?: (...args: any[]) => void): void {
     }
   }
 }
+
+/**
+ * Socket service object (for convenience)
+ */
+export const socketService = {
+  connect,
+  getSocket,
+  disconnect,
+  emit,
+  on,
+  off,
+};
