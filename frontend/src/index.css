@@ -2,12 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+   MOBILE-FIRST CSS RULES
+   Based on: .cursor/MOBILE_FIRST.md
+   ============================================================================= */
+
 body {
   margin: 0;
   min-height: 100vh;
   font-family: system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* Prevent overscroll bounce (iOS pull-to-refresh) */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent tap highlight flash on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent double-tap zoom on buttons */
+button {
+  touch-action: manipulation;
+}
+
+/* Prevent text selection during gameplay */
+.game-area {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Safe area support for notches/home indicator */
+#root {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Prevent zoom on input focus (iOS zooms if <16px) */
+input, 
+select, 
+textarea {
+  font-size: 16px !important;
 }
 
 @keyframes slide-in {

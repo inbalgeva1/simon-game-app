@@ -244,7 +244,8 @@ export function WaitingRoomPage() {
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
             <button
               onClick={copyGameCode}
-              className="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 font-medium py-2.5 sm:py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
+              className="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 active:scale-95 text-gray-700 font-medium py-2.5 sm:py-2 px-4 rounded-lg transition-all duration-75 flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
+              style={{ touchAction: 'manipulation' }}
               title="Copy game code"
             >
               📋 <span className="hidden sm:inline">Copy Code</span><span className="sm:hidden">Code</span>
@@ -252,7 +253,8 @@ export function WaitingRoomPage() {
             
             <button
               onClick={copyInviteLink}
-              className="bg-blue-100 hover:bg-blue-200 active:bg-blue-300 text-blue-700 font-medium py-2.5 sm:py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
+              className="bg-blue-100 hover:bg-blue-200 active:bg-blue-300 active:scale-95 text-blue-700 font-medium py-2.5 sm:py-2 px-4 rounded-lg transition-all duration-75 flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
+              style={{ touchAction: 'manipulation' }}
               title="Copy invite link"
             >
               🔗 <span className="hidden sm:inline">Copy Link</span><span className="sm:hidden">Link</span>
@@ -260,7 +262,8 @@ export function WaitingRoomPage() {
             
             <button
               onClick={shareGame}
-              className="bg-green-100 hover:bg-green-200 active:bg-green-300 text-green-700 font-medium py-2.5 sm:py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
+              className="bg-green-100 hover:bg-green-200 active:bg-green-300 active:scale-95 text-green-700 font-medium py-2.5 sm:py-2 px-4 rounded-lg transition-all duration-75 flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px]"
+              style={{ touchAction: 'manipulation' }}
               title="Share with friends"
             >
               📤 Share
@@ -291,7 +294,8 @@ export function WaitingRoomPage() {
         {isHost && (
           <button
             onClick={handleStartGame}
-            className="w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-colors text-base sm:text-lg"
+            className="w-full bg-green-500 hover:bg-green-600 active:bg-green-700 active:scale-98 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-75 text-base sm:text-lg min-h-[56px]"
+            style={{ touchAction: 'manipulation' }}
           >
             🎮 Start Game
           </button>

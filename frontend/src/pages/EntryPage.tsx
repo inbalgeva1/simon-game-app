@@ -73,14 +73,16 @@ export function EntryPage() {
           <div className="space-y-3 sm:space-y-4">
             <button
               onClick={() => setMode('create')}
-              className="w-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-colors text-base sm:text-lg"
+              className="w-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 active:scale-98 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-75 text-base sm:text-lg min-h-[56px]"
+              style={{ touchAction: 'manipulation' }}
             >
               Create Game
             </button>
             
             <button
               onClick={() => setMode('join')}
-              className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-colors text-base sm:text-lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-98 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-75 text-base sm:text-lg min-h-[56px]"
+              style={{ touchAction: 'manipulation' }}
             >
               Join Game
             </button>
@@ -153,11 +155,12 @@ export function EntryPage() {
                   key={id}
                   type="button"
                   onClick={() => setAvatarId(id)}
-                  className={`p-2.5 sm:p-4 rounded-lg border-2 transition-all ${
+                  className={`p-2.5 sm:p-4 rounded-lg border-2 transition-all duration-75 active:scale-95 min-h-[56px] min-w-[56px] ${
                     avatarId === id
                       ? 'border-purple-600 bg-purple-50'
                       : 'border-gray-200 hover:border-gray-300 active:border-gray-400'
                   }`}
+                  style={{ touchAction: 'manipulation' }}
                 >
                   <span className="text-2xl sm:text-3xl">{['😀', '🎮', '🚀', '⚡', '🎨', '🎯', '🏆', '🌟'][parseInt(id) - 1]}</span>
                 </button>
@@ -174,7 +177,8 @@ export function EntryPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:bg-gray-400 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-colors text-base sm:text-lg"
+            className="w-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 active:scale-98 disabled:bg-gray-400 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-75 text-base sm:text-lg min-h-[56px]"
+            style={{ touchAction: 'manipulation' }}
           >
             {loading ? 'Loading...' : mode === 'create' ? 'Create Game' : 'Join Game'}
           </button>
