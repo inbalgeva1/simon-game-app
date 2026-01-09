@@ -1,24 +1,54 @@
 {
   "name": "simon-game-app",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Multiplayer Simon Says game with real-time WebSocket communication",
+  "main": "dist/backend/index.js",
   "scripts": {
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "test:watch": "vitest --watch",
     "build": "tsc",
-    "dev": "tsc --watch"
+    "build:backend": "tsc -p tsconfig.backend.json",
+    "dev": "tsc --watch",
+    "dev:backend": "tsx watch src/backend/index.ts",
+    "start": "node dist/backend/index.js",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
+  "keywords": [
+    "simon-says",
+    "multiplayer",
+    "game",
+    "websocket",
+    "real-time"
+  ],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
-    "@types/node": "^25.0.3",
+    "@types/cookie": "^0.6.0",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^22.15.32",
+    "@types/uuid": "^10.0.0",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
+    "tsx": "^4.20.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
+  },
+  "dependencies": {
+    "cookie": "^1.0.4",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.62"
   }
 }
