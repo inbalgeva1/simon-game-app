@@ -44,20 +44,13 @@ git clone https://github.com/itayshmool/simon-game-app-cday.git
 
 In Cursor, open the terminal: Press **Ctrl + `** (backtick key)
 
-### Run these two commands:
+### Run this command:
 
-**Command 1 - Setup (run once):**
 ```bash
-npm run setup
-```
-Wait for it to complete (installs all dependencies).
-
-**Command 2 - Start the app:**
-```bash
-npm run dev
+npm run go
 ```
 
-You should see:
+This will install everything and start the app. You should see:
 ```
 🎮 SIMON GAME SERVER
    🌐 HTTP:      http://localhost:3000
@@ -168,8 +161,8 @@ You've successfully:
 
 | Problem | Solution |
 |---------|----------|
-| `npm run setup` fails | Make sure Node.js is installed: `node --version` should show v18+ |
-| `npm run dev` fails | Close other terminals, try again |
+| `npm run go` fails | Make sure Node.js is installed: `node --version` should show v18+ |
+| App won't start | Close other terminals, try again |
 | Can't connect on Render | Check environment variables are set correctly |
 | WebSocket issues | Make sure URLs use `https://` not `http://` |
 
