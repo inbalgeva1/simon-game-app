@@ -99,15 +99,21 @@ This will:
 
 When done, you'll see your repository URL: `https://github.com/YOUR_USERNAME/simon-game-app`
 
-> ⚠️ **First time?** If you see "GitHub CLI not installed", ask Cursor: "Help me install GitHub CLI and login"
+> ⚠️ **First time?** If you see "GitHub CLI not installed", ask Cursor:
+
+```
+Help me install GitHub CLI and login
+```
 
 ---
 
 ### 4.2 Deploy on Render (Using Cursor)
 
-**In Cursor chat (Cmd+L or Ctrl+L), ask:**
+**In Cursor chat (Cmd+L or Ctrl+L), copy and paste:**
 
-> "Deploy my simon-game-app to Render. Create a backend web service and a frontend static site using the render.yaml configuration"
+```
+Deploy my simon-game-app to Render. Create a backend web service and a frontend static site using the render.yaml configuration
+```
 
 Cursor will:
 1. ✅ Create the backend service on Render
@@ -133,9 +139,11 @@ If Cursor can't deploy, do it manually:
 
 ### 4.3 Configure Environment Variables
 
-**In Cursor chat, ask:**
+**In Cursor chat, copy and paste:**
 
-> "Get my Render services URLs and configure the environment variables: set FRONTEND_URL on simon-game-backend to the frontend URL, and set VITE_API_URL and VITE_SOCKET_URL on simon-game-frontend to the backend URL"
+```
+Get my Render services URLs and configure the environment variables: set FRONTEND_URL on simon-game-backend to the frontend URL, and set VITE_API_URL and VITE_SOCKET_URL on simon-game-frontend to the backend URL
+```
 
 Cursor will:
 1. ✅ Find your services on Render
@@ -197,7 +205,9 @@ You've successfully:
 
 Ask Cursor! Open chat (Cmd+L) and describe your problem:
 
-> "I'm getting this error: [paste error message]"
+```
+I'm getting this error: [paste error message]
+```
 
 ---
 
