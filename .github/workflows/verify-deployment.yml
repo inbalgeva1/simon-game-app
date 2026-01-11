@@ -1,0 +1,78 @@
+name: Verify Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    name: Verify Deployment
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Wait for Render deployment
+        run: sleep 120  # Wait 2 minutes for Render to deploy
+
+      - name: Check backend health
+        run: |
+          BACKEND_URL="${{ secrets.RENDER_BACKEND_URL }}"
+          if [ -z "$BACKEND_URL" ]; then
+            echo "⚠️ RENDER_BACKEND_URL not set, skipping backend check"
+            exit 0
+          fi
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL/health" || echo "000")
+          
+          if [ "$response" != "200" ]; then
+            echo "❌ Backend health check failed (HTTP $response)"
+            echo "Backend URL: $BACKEND_URL"
+            exit 1
+          fi
+          
+          echo "✅ Backend is healthy"
+
+      - name: Check frontend accessibility
+        run: |
+          FRONTEND_URL="${{ secrets.RENDER_FRONTEND_URL }}"
+          if [ -z "$FRONTEND_URL" ]; then
+            echo "⚠️ RENDER_FRONTEND_URL not set, skipping frontend check"
+            exit 0
+          fi
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL" || echo "000")
+          
+          if [ "$response" != "200" ]; then
+            echo "❌ Frontend check failed (HTTP $response)"
+            echo "Frontend URL: $FRONTEND_URL"
+            exit 1
+          fi
+          
+          echo "✅ Frontend is accessible"
+
+      - name: Notify deployment success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commit = context.payload.head_commit;
+            const message = `🚀 Deployment Successful!
+            
+            **Commit:** ${commit.message.split('\n')[0]}
+            **Author:** ${commit.author.name}
+            **Time:** ${new Date(commit.timestamp).toLocaleString()}
+            
+            ✅ All health checks passed!`;
+            
+            // Post to GitHub commit status
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'success',
+              description: 'Deployment verified successfully',
+              context: 'deployment/verify'
+            });
+            
+            core.info(message);
+

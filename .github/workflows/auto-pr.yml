@@ -1,0 +1,114 @@
+name: Auto-Create PR
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'fix/**'
+      - 'feat/**'
+      - 'hotfix/**'
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && !github.event.head_commit.message.startsWith('[skip ci]')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if PR exists
+        id: check-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${context.ref.replace('refs/heads/', '')}`,
+              state: 'open'
+            });
+            
+            if (prs.length > 0) {
+              core.info(`PR already exists: #${prs[0].number}`);
+              core.setOutput('pr_number', prs[0].number);
+              core.setOutput('exists', 'true');
+            } else {
+              core.setOutput('exists', 'false');
+            }
+
+      - name: Create Pull Request
+        if: steps.check-pr.outputs.exists == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const branchType = branch.split('/')[0];
+            
+            // Determine PR title and labels based on branch name
+            let title = branch.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            let labels = ['needs-review'];
+            
+            if (branchType === 'feature' || branchType === 'feat') {
+              labels.push('enhancement');
+              title = `✨ ${title}`;
+            } else if (branchType === 'fix') {
+              labels.push('bug');
+              title = `🐛 ${title}`;
+            } else if (branchType === 'hotfix') {
+              labels.push('hotfix', 'urgent');
+              title = `🚨 ${title}`;
+            }
+            
+            // Get commit messages for PR body
+            const { data: commits } = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              per_page: 10
+            });
+            
+            const commitMessages = commits
+              .slice(0, 5)
+              .map(c => `- ${c.commit.message.split('\n')[0]}`)
+              .join('\n');
+            
+            const prBody = `## 📝 Changes
+            
+${commitMessages}
+
+## ✅ Checklist
+- [ ] Tests pass locally
+- [ ] Code follows project standards
+- [ ] Documentation updated (if needed)
+
+## 🔍 Review Notes
+_Add any specific areas you'd like reviewers to focus on_
+
+---
+_Auto-generated PR from branch: \`${branch}\`_`;
+            
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: prBody,
+              head: branch,
+              base: 'main',
+              draft: false
+            });
+            
+            // Add labels
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: labels
+            });
+            
+            core.info(`✅ Created PR #${pr.number}: ${title}`);
+            core.setOutput('pr_number', pr.number);
+
