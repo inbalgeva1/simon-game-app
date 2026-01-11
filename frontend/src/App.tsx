@@ -8,6 +8,8 @@ import { useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { EntryPage } from './pages/EntryPage';
 import { WaitingRoomPage } from './pages/WaitingRoomPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { InvitePage } from './pages/InvitePage';
 import { LandscapeWarning } from './components/ui/LandscapeWarning';
 import { SplashScreen } from './components/ui/SplashScreen';
 
@@ -27,6 +29,8 @@ function App() {
       <Routes>
         <Route path="/" element={<EntryPage />} />
         <Route path="/waiting" element={<WaitingRoomPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/invite" element={<InvitePage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

@@ -1,188 +1,176 @@
 /**
- * Entry Page
+ * Entry Page (Home Screen)
  * 
- * Name + avatar selection page.
- * First screen players see.
+ * Main landing screen with New Game, Settings, and Invite Friends.
  */
 
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createSession, joinGame } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
+import { createSession } from '../services/authService';
 import { useAuthStore } from '../store/authStore';
 
+// Simon game quadrant colors for the animated logo
+const QUADRANT_COLORS = {
+  green: { base: '#22c55e', lit: '#4ade80' },
+  red: { base: '#ef4444', lit: '#f87171' },
+  yellow: { base: '#eab308', lit: '#facc15' },
+  blue: { base: '#3b82f6', lit: '#60a5fa' },
+};
+
+// Animated Simon Logo Component
+function SimonLogo() {
+  const [activeQuadrant, setActiveQuadrant] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveQuadrant((prev) => (prev + 1) % 4);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative w-32 h-32 sm:w-40 sm:h-40">
+      {/* Green - Top Left */}
+      <div
+        className="absolute top-0 left-0 w-1/2 h-1/2 rounded-tl-full transition-all duration-150"
+        style={{
+          backgroundColor: activeQuadrant === 0 ? QUADRANT_COLORS.green.lit : QUADRANT_COLORS.green.base,
+          boxShadow: activeQuadrant === 0 ? `0 0 20px ${QUADRANT_COLORS.green.lit}` : 'none',
+          transform: activeQuadrant === 0 ? 'scale(1.05)' : 'scale(1)',
+        }}
+      />
+      {/* Red - Top Right */}
+      <div
+        className="absolute top-0 right-0 w-1/2 h-1/2 rounded-tr-full transition-all duration-150"
+        style={{
+          backgroundColor: activeQuadrant === 1 ? QUADRANT_COLORS.red.lit : QUADRANT_COLORS.red.base,
+          boxShadow: activeQuadrant === 1 ? `0 0 20px ${QUADRANT_COLORS.red.lit}` : 'none',
+          transform: activeQuadrant === 1 ? 'scale(1.05)' : 'scale(1)',
+        }}
+      />
+      {/* Yellow - Bottom Left */}
+      <div
+        className="absolute bottom-0 left-0 w-1/2 h-1/2 rounded-bl-full transition-all duration-150"
+        style={{
+          backgroundColor: activeQuadrant === 2 ? QUADRANT_COLORS.yellow.lit : QUADRANT_COLORS.yellow.base,
+          boxShadow: activeQuadrant === 2 ? `0 0 20px ${QUADRANT_COLORS.yellow.lit}` : 'none',
+          transform: activeQuadrant === 2 ? 'scale(1.05)' : 'scale(1)',
+        }}
+      />
+      {/* Blue - Bottom Right */}
+      <div
+        className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-br-full transition-all duration-150"
+        style={{
+          backgroundColor: activeQuadrant === 3 ? QUADRANT_COLORS.blue.lit : QUADRANT_COLORS.blue.base,
+          boxShadow: activeQuadrant === 3 ? `0 0 20px ${QUADRANT_COLORS.blue.lit}` : 'none',
+          transform: activeQuadrant === 3 ? 'scale(1.05)' : 'scale(1)',
+        }}
+      />
+      {/* Center Circle */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-900 border-2 border-gray-700" />
+    </div>
+  );
+}
+
 export function EntryPage() {
-  const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<'create' | 'join' | null>(null);
-  const [displayName, setDisplayName] = useState('');
-  const [gameCode, setGameCode] = useState('');
-  const [avatarId, setAvatarId] = useState('1');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
   const { setSession } = useAuthStore();
   const navigate = useNavigate();
-  
-  // Handle invite link with game code in URL
-  useEffect(() => {
-    const joinCode = searchParams.get('join');
-    if (joinCode) {
-      setMode('join');
-      setGameCode(joinCode.toUpperCase());
-    }
-  }, [searchParams]);
 
-  const handleCreateGame = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const handleNewGame = async () => {
     setLoading(true);
-
     try {
-      const response = await createSession(displayName, avatarId);
+      // Create a new game session with default player name
+      const response = await createSession('Player', '1');
       setSession(response.session);
       navigate('/waiting');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create game');
+      console.error('Failed to create game:', err);
+      // Still navigate to waiting room - it will handle the error
+      navigate('/waiting');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleJoinGame = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(false);
+  return (
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)',
+      }}
+    >
+      <div className="flex flex-col items-center justify-center gap-8 w-full max-w-sm">
+        {/* Logo */}
+        <SimonLogo />
 
-    try {
-      const response = await joinGame(displayName, avatarId, gameCode);
-      setSession(response.session);
-      navigate('/waiting');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to join game');
-    } finally {
-      setLoading(false);
-    }
-  };
+        {/* Title */}
+        <div className="text-center">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-2">
+            Simon Says
+          </h1>
+          <p className="text-gray-400 text-sm sm:text-base">
+            Color Race Edition
+          </p>
+        </div>
 
-  if (!mode) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-3 sm:p-4">
-        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full">
-          <h1 className="text-3xl sm:text-4xl font-bold text-center mb-2">🎮 Simon Says</h1>
-          <p className="text-gray-600 text-center mb-6 sm:mb-8 text-sm sm:text-base">Color Race Edition</p>
-          
-          <div className="space-y-3 sm:space-y-4">
+        {/* Main CTAs */}
+        <div className="w-full space-y-4 mt-4">
+          {/* New Game - Primary CTA */}
+          <button
+            onClick={handleNewGame}
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 active:scale-[0.98] disabled:opacity-50 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-150 text-lg shadow-lg shadow-green-500/30"
+            style={{ touchAction: 'manipulation' }}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Starting...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <span>🎮</span>
+                New Game
+              </span>
+            )}
+          </button>
+
+          {/* Secondary CTAs */}
+          <div className="flex gap-3">
+            {/* Settings */}
             <button
-              onClick={() => setMode('create')}
-              className="w-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 active:scale-98 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-75 text-base sm:text-lg min-h-[56px]"
+              onClick={() => navigate('/settings')}
+              className="flex-1 bg-gray-800/80 hover:bg-gray-700 active:scale-[0.98] text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-150 border border-gray-700"
               style={{ touchAction: 'manipulation' }}
             >
-              Create Game
+              <span className="flex items-center justify-center gap-2">
+                <span>⚙️</span>
+                Settings
+              </span>
             </button>
-            
+
+            {/* Invite Friends */}
             <button
-              onClick={() => setMode('join')}
-              className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-98 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-75 text-base sm:text-lg min-h-[56px]"
+              onClick={() => navigate('/invite')}
+              className="flex-1 bg-gray-800/80 hover:bg-gray-700 active:scale-[0.98] text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-150 border border-gray-700"
               style={{ touchAction: 'manipulation' }}
             >
-              Join Game
+              <span className="flex items-center justify-center gap-2">
+                <span>👥</span>
+                Invite
+              </span>
             </button>
           </div>
         </div>
-      </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full">
-        <button
-          onClick={() => setMode(null)}
-          className="text-gray-600 hover:text-gray-800 active:text-gray-900 mb-4 text-sm sm:text-base"
-        >
-          ← Back
-        </button>
-        
-        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">
-          {mode === 'create' ? 'Create Game' : 'Join Game'}
-        </h2>
-        
-        <form onSubmit={mode === 'create' ? handleCreateGame : handleJoinGame} className="space-y-3 sm:space-y-4">
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-              Display Name
-            </label>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Enter your name"
-              minLength={3}
-              maxLength={12}
-              required
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-sm sm:text-base"
-            />
-          </div>
-          
-          {mode === 'join' && (
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                Game Code
-                {searchParams.get('join') && (
-                  <span className="ml-2 text-xs text-green-600 font-normal">
-                    ✅ Pre-filled from invite link
-                  </span>
-                )}
-              </label>
-              <input
-                type="text"
-                value={gameCode}
-                onChange={(e) => setGameCode(e.target.value.toUpperCase())}
-                placeholder="ABCDEF"
-                maxLength={6}
-                required
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent uppercase text-sm sm:text-base"
-              />
-            </div>
-          )}
-          
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-              Avatar
-            </label>
-            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
-              {['1', '2', '3', '4', '5', '6', '7', '8'].map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setAvatarId(id)}
-                  className={`p-2.5 sm:p-4 rounded-lg border-2 transition-all duration-75 active:scale-95 min-h-[56px] min-w-[56px] ${
-                    avatarId === id
-                      ? 'border-purple-600 bg-purple-50'
-                      : 'border-gray-200 hover:border-gray-300 active:border-gray-400'
-                  }`}
-                  style={{ touchAction: 'manipulation' }}
-                >
-                  <span className="text-2xl sm:text-3xl">{['😀', '🎮', '🚀', '⚡', '🎨', '🎯', '🏆', '🌟'][parseInt(id) - 1]}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm">
-              {error}
-            </div>
-          )}
-          
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 active:scale-98 disabled:bg-gray-400 text-white font-bold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-75 text-base sm:text-lg min-h-[56px]"
-            style={{ touchAction: 'manipulation' }}
-          >
-            {loading ? 'Loading...' : mode === 'create' ? 'Create Game' : 'Join Game'}
-          </button>
-        </form>
+        {/* Version/Footer */}
+        <p className="text-gray-600 text-xs mt-8">
+          v1.0.0
+        </p>
       </div>
     </div>
   );

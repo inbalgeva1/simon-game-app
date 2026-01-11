@@ -33,13 +33,23 @@ fi
 
 echo ""
 
+# Set npm registry (required for Wix internal network)
+echo "🔧 Configuring npm registry..."
+echo "registry=http://npm.dev.wixpress.com" > .npmrc
+echo "registry=http://npm.dev.wixpress.com" > frontend/.npmrc
+echo "   ✅ Registry set to Wix internal"
+
+echo ""
+
 # Install dependencies
 echo "📦 Installing backend dependencies..."
-npm install --silent
+npm install --no-fund --no-audit
 
 echo ""
 echo "📦 Installing frontend dependencies..."
-cd frontend && npm install --silent && cd ..
+cd frontend
+npm install --no-fund --no-audit
+cd ..
 
 echo ""
 echo "🚀 Starting servers to verify setup..."
